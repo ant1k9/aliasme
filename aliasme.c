@@ -35,8 +35,9 @@ const char* MAIN_TEMPLATE =
     "echo %s";
 
 const char* ADD = "add";
-const char* RUN = "run";
+const char* EDIT = "edit";
 const char* REMOVE = "rm";
+const char* RUN = "run";
 
 const char* ALIASME_DIRECTORY = ".local/share/aliasme";
 const char* ALIASME_BIN = "bin";
@@ -72,9 +73,9 @@ void create_command_directory(char* cmd) {
 }
 
 void create_main(char* cmd) {
-    char main_path[1012] = {0};
+    char main_path[1008] = {0};
 
-    snprintf(main_path, 1024, "%s/%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
+    snprintf(main_path, 1008, "%s/%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
              cmd, MAIN);
     FILE* file = fopen(main_path, "w");
     fprintf(file, MAIN_TEMPLATE, cmd);
@@ -107,6 +108,32 @@ void add_command(int argc, char* argv[]) {
     create_main(cmd);
     if (argc == 1) create_executable(cmd);
     printf("Successfully added %s\n", cmd);
+}
+
+void edit_main(char* cmd) {
+    char editor_cmd[1024] = {0};
+
+    snprintf(editor_cmd, 1024, "$EDITOR %s/%s/%s/%s", getenv("HOME"),
+             ALIASME_DIRECTORY, cmd, MAIN);
+
+    if (system(editor_cmd)) handle_error("cannot open file in editor");
+}
+
+void edit_command(int argc, char* argv[]) {
+    if (argc == 0) usage();
+
+    ensure_aliasme_directory_exists();
+
+    char* cmd = argv[0];
+    struct stat st = {0};
+
+    char cmd_path[1024] = {0};
+    snprintf(cmd_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
+             cmd);
+    if (stat(cmd_path, &st) == -1) {
+        handle_error("command does not exist");
+    }
+    edit_main(cmd);
 }
 
 void run_command(int argc, char* argv[]) {
@@ -168,4 +195,10 @@ int main(int argc, char* argv[]) {
         remove_command(argc - 2, argv + 2);
         return 0;
     }
+    if (!strcmp(argv[1], EDIT)) {
+        edit_command(argc - 2, argv + 2);
+        return 0;
+    }
+
+    usage();
 }
