@@ -18,7 +18,7 @@ $(EXECUTABLE): $(OBJECTS)
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
 
-install:
+install: $(EXECUTABLE)
 	@mv aliasme $(HOME)/bin/
 
 clean:
