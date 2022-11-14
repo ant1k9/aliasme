@@ -65,13 +65,11 @@ void create_command_directory(char* cmd) {
 }
 
 void create_main(char* cmd) {
-    char main_path[1024] = {0};
+    char main_path[1012] = {0};
 
     snprintf(main_path, 1024, "%s/%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
              cmd, MAIN);
     FILE* file = fopen(main_path, "w");
-
-    char main_template[1024] = {0};
     fprintf(file, MAIN_TEMPLATE, cmd);
     fclose(file);
 
@@ -87,8 +85,6 @@ void create_executable(char* cmd) {
 
     snprintf(exec_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_BIN, cmd);
     FILE* file = fopen(exec_path, "w");
-
-    char main_template[1024] = {0};
     fprintf(file, EXEC_TEMPLATE, cmd);
 
     chmod(exec_path, 0755);
