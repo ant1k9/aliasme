@@ -20,6 +20,7 @@ $(EXECUTABLE): $(OBJECTS)
 
 install: $(EXECUTABLE)
 	@mv aliasme $(HOME)/bin/
+	@cp completions/aliasme.fish $(HOME)/.config/fish/completions
 
 clean:
 	rm -rf *.o $(EXECUTABLE)
