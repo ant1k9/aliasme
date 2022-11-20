@@ -25,7 +25,7 @@ const char* USAGE =
 
 const char* EXEC_TEMPLATE =
     "#!/usr/bin/env bash\n"
-    "aliasme run %s";
+    "aliasme run %s $*";
 
 const char* MAIN_TEMPLATE =
     "#!/usr/bin/env bash\n"
@@ -67,9 +67,7 @@ void create_command_directory(char* cmd) {
     snprintf(cmd_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
              cmd);
 
-    if (stat(cmd_path, &st) == -1) {
-        mkdir(cmd_path, 0755);
-    }
+    if (stat(cmd_path, &st) == -1) mkdir(cmd_path, 0755);
 }
 
 void create_main(char* cmd) {
@@ -77,6 +75,10 @@ void create_main(char* cmd) {
 
     snprintf(main_path, 1008, "%s/%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
              cmd, MAIN);
+
+    struct stat st = {0};
+    if (stat(main_path, &st) != -1) return;
+
     FILE* file = fopen(main_path, "w");
     fprintf(file, MAIN_TEMPLATE, cmd);
     fclose(file);
@@ -92,6 +94,9 @@ void create_executable(char* cmd) {
     char exec_path[1024] = {0};
 
     snprintf(exec_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_BIN, cmd);
+    struct stat st = {0};
+    if (stat(exec_path, &st) != -1) return;
+
     FILE* file = fopen(exec_path, "w");
     fprintf(file, EXEC_TEMPLATE, cmd);
     fclose(file);
@@ -102,19 +107,26 @@ void create_executable(char* cmd) {
 void add_command(int argc, char* argv[]) {
     if (argc == 0) usage();
 
-    char* cmd = argv[0];
     ensure_aliasme_directory_exists();
-    create_command_directory(cmd);
-    create_main(cmd);
-    if (argc == 1) create_executable(cmd);
-    printf("Successfully added %s\n", cmd);
+
+    char cmd_path[1024] = {0};
+    for (int i = 0; i < argc; i++) {
+        char* separator = strlen(cmd_path) > 0 ? "/" : "";
+        snprintf(cmd_path + strlen(cmd_path), 1024 - strlen(cmd_path), "%s%s",
+                 separator, argv[i]);
+
+        create_command_directory(cmd_path);
+        create_main(cmd_path);
+    }
+
+    create_executable(argv[0]);
+    printf("Successfully added %s\n", argv[argc - 1]);
 }
 
 void edit_main(char* cmd) {
     char editor_cmd[1024] = {0};
 
-    snprintf(editor_cmd, 1024, "$EDITOR %s/%s/%s/%s", getenv("HOME"),
-             ALIASME_DIRECTORY, cmd, MAIN);
+    snprintf(editor_cmd, 1024, "$EDITOR %s/%s", cmd, MAIN);
 
     if (system(editor_cmd)) handle_error("cannot open file in editor");
 }
@@ -124,25 +136,46 @@ void edit_command(int argc, char* argv[]) {
 
     ensure_aliasme_directory_exists();
 
-    char* cmd = argv[0];
-    struct stat st = {0};
-
     char cmd_path[1024] = {0};
-    snprintf(cmd_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
-             cmd);
-    if (stat(cmd_path, &st) == -1) {
-        handle_error("command does not exist");
+    for (int i = 0; i < argc; i++) {
+        if (i) {
+            snprintf(cmd_path + strlen(cmd_path), 1024 - strlen(cmd_path),
+                     "/%s", argv[i]);
+        } else {
+            snprintf(cmd_path, 1024, "%s/%s/%s", getenv("HOME"),
+                     ALIASME_DIRECTORY, argv[i]);
+        }
+
+        struct stat st = {0};
+        if (stat(cmd_path, &st) == -1) {
+            handle_error("command does not exist");
+        }
     }
-    edit_main(cmd);
+
+    edit_main(cmd_path);
 }
 
 void run_command(int argc, char* argv[]) {
     if (argc == 0) usage();
 
     char exec_path[1024] = {0};
-    char* cmd = argv[0];
-    snprintf(exec_path, 1024, "%s/%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
-             cmd, MAIN);
+    for (int i = 0; i < argc; i++) {
+        if (i) {
+            snprintf(exec_path + strlen(exec_path), 1024 - strlen(exec_path),
+                     "/%s", argv[i]);
+        } else {
+            snprintf(exec_path, 1024, "%s/%s/%s", getenv("HOME"),
+                     ALIASME_DIRECTORY, argv[i]);
+        }
+
+        struct stat st = {0};
+        if (stat(exec_path, &st) == -1) {
+            handle_error("command does not exist");
+        }
+    }
+
+    snprintf(exec_path + strlen(exec_path), 1024 - strlen(exec_path), "/%s",
+             MAIN);
     if (system(exec_path)) handle_error("cannot run command");
 }
 
@@ -167,17 +200,26 @@ void remove_command(int argc, char* argv[]) {
     struct stat st = {0};
     char cmd_path[1024] = {0};
 
-    char* cmd = argv[0];
-    snprintf(cmd_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
-             cmd);
+    for (int i = 0; i < argc; i++) {
+        if (i) {
+            snprintf(cmd_path + strlen(cmd_path), 1024 - strlen(cmd_path),
+                     "/%s", argv[i]);
+            continue;
+        }
+        snprintf(cmd_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_DIRECTORY,
+                 argv[i]);
+    }
 
     if (stat(cmd_path, &st) != -1) {
         remove_directory(cmd_path);
     }
 
-    char exec_path[1024] = {0};
-    snprintf(exec_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_BIN, cmd);
-    remove(exec_path);
+    if (argc == 1) {
+        char exec_path[1024] = {0};
+        snprintf(exec_path, 1024, "%s/%s/%s", getenv("HOME"), ALIASME_BIN,
+                 argv[1]);
+        remove(exec_path);
+    }
 }
 
 int main(int argc, char* argv[]) {
