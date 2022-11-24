@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <ftw.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +31,8 @@ const char* EXEC_TEMPLATE =
 const char* MAIN_TEMPLATE =
     "#!/usr/bin/env bash\n"
     "# Description: \n"
-    "# Args: 0\n"
+    "# Help: \n"
+    "# Args: false\n"
     "\n"
     "echo %s";
 
@@ -65,6 +67,7 @@ const char* FISH_COMPLETION_DIRECTORY = ".config/fish/completions";
 #define MAX_ARGS_BUFFER 1024
 #define MAX_CONDITION_BUFFER 1024
 #define MAX_COMPLETION_DEPTH 64
+#define HEADER_SIZE 256
 
 void usage() {
     printf("%s", USAGE);
@@ -264,11 +267,31 @@ void edit_command(int argc, char* argv[]) {
     edit_main(cmd_path);
 }
 
+bool get_args(char* path) {
+    char main_path[MAX_PATH_LENGTH] = {0};
+    strcpy(main_path, path);
+
+    snprintf(main_path + strlen(main_path), MAX_PATH_LENGTH - strlen(main_path),
+             "/%s", MAIN);
+
+    char header_buf[HEADER_SIZE] = {0};
+    FILE* file = fopen(main_path, "r");
+    if (!file) handle_error("cannot check main content");
+
+    fread(header_buf, sizeof(char), HEADER_SIZE, file);
+    bool has_args = strstr(header_buf, "# Args: true") != NULL;
+
+    fclose(file);
+
+    return has_args;
+}
+
 void run_command(int argc, char* argv[]) {
     if (argc == 0) usage();
 
     char exec_path[MAX_PATH_LENGTH] = {0};
-    for (int i = 0; i < argc; i++) {
+    int i = 0;
+    for (; i < argc; i++) {
         if (i) {
             snprintf(exec_path + strlen(exec_path),
                      MAX_PATH_LENGTH - strlen(exec_path), "/%s", argv[i]);
@@ -276,6 +299,7 @@ void run_command(int argc, char* argv[]) {
             snprintf(exec_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
                      ALIASME_DIRECTORY, argv[i]);
         }
+        if (get_args(exec_path)) break;
 
         struct stat st = {0};
         if (stat(exec_path, &st) == -1) {
@@ -285,6 +309,10 @@ void run_command(int argc, char* argv[]) {
 
     snprintf(exec_path + strlen(exec_path), MAX_PATH_LENGTH - strlen(exec_path),
              "/%s", MAIN);
+    for (++i; i < argc; i++)
+        snprintf(exec_path + strlen(exec_path),
+                 MAX_PATH_LENGTH - strlen(exec_path), " %s", argv[i]);
+
     if (system(exec_path)) handle_error("cannot run command");
 }
 
