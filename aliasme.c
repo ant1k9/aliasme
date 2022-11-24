@@ -81,10 +81,9 @@ void ensure_aliasme_directory_exists() {
     snprintf(aliasme_path, MAX_PATH_LENGTH, "%s/%s", getenv("HOME"),
              ALIASME_DIRECTORY);
 
-    if (stat(aliasme_path, &st) == -1) {
+    if (stat(aliasme_path, &st) == -1)
         if (mkdir(aliasme_path, 0755))
             handle_error("cannot create aliasme directory");
-    }
 }
 
 void create_command_directory(char* cmd) {
@@ -250,18 +249,15 @@ void edit_command(int argc, char* argv[]) {
 
     char cmd_path[MAX_PATH_LENGTH] = {0};
     for (int i = 0; i < argc; i++) {
-        if (i) {
+        if (i)
             snprintf(cmd_path + strlen(cmd_path),
                      MAX_PATH_LENGTH - strlen(cmd_path), "/%s", argv[i]);
-        } else {
+        else
             snprintf(cmd_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
                      ALIASME_DIRECTORY, argv[i]);
-        }
 
         struct stat st = {0};
-        if (stat(cmd_path, &st) == -1) {
-            handle_error("command does not exist");
-        }
+        if (stat(cmd_path, &st) == -1) handle_error("command does not exist");
     }
 
     edit_main(cmd_path);
@@ -292,19 +288,16 @@ void run_command(int argc, char* argv[]) {
     char exec_path[MAX_PATH_LENGTH] = {0};
     int i = 0;
     for (; i < argc; i++) {
-        if (i) {
+        if (i)
             snprintf(exec_path + strlen(exec_path),
                      MAX_PATH_LENGTH - strlen(exec_path), "/%s", argv[i]);
-        } else {
+        else
             snprintf(exec_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
                      ALIASME_DIRECTORY, argv[i]);
-        }
         if (get_args(exec_path)) break;
 
         struct stat st = {0};
-        if (stat(exec_path, &st) == -1) {
-            handle_error("command does not exist");
-        }
+        if (stat(exec_path, &st) == -1) handle_error("command does not exist");
     }
 
     snprintf(exec_path + strlen(exec_path), MAX_PATH_LENGTH - strlen(exec_path),
@@ -338,9 +331,7 @@ void remove_fish_completion(char* cmd) {
     snprintf(completion_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
              FISH_COMPLETION_DIRECTORY, cmd);
 
-    if (stat(completion_path, &st) != -1) {
-        remove(completion_path);
-    }
+    if (stat(completion_path, &st) != -1) remove(completion_path);
 }
 
 void remove_command(int argc, char* argv[]) {
@@ -359,9 +350,7 @@ void remove_command(int argc, char* argv[]) {
                  ALIASME_DIRECTORY, argv[i]);
     }
 
-    if (stat(cmd_path, &st) != -1) {
-        remove_directory(cmd_path);
-    }
+    if (stat(cmd_path, &st) != -1) remove_directory(cmd_path);
 
     if (argc == 1) {
         char exec_path[MAX_PATH_LENGTH] = {0};
@@ -369,9 +358,8 @@ void remove_command(int argc, char* argv[]) {
                  ALIASME_BIN, argv[1]);
         remove(exec_path);
         remove_fish_completion(argv[0]);
-    } else {
+    } else
         generate_fish_completion(argv[0]);
-    }
 }
 
 int main(int argc, char* argv[]) {
