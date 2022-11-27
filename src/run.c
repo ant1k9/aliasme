@@ -59,12 +59,12 @@ void run_command(int argc, char* argv[]) {
         else
             snprintf(exec_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
                      ALIASME_DIRECTORY, argv[i]);
-        if (get_args(exec_path)) break;
         if (i + 1 < argc &&
             (!strcmp(argv[i + 1], "-h") || !strcmp(argv[i + 1], "--help"))) {
             print_help(exec_path);
             return;
         }
+        if (get_args(exec_path)) break;
 
         struct stat st = {0};
         if (stat(exec_path, &st) == -1) handle_error("command does not exist");
