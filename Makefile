@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-c -Wall -Wextra -Wpedantic -std=c11
 LFLAGS=-Wall
 
-SOURCES=$(wildcard *.c)
+SOURCES=$(wildcard *.c) $(wildcard src/*.c)
 INCLUDES=$(wildcard *.h)
 
 OBJDIR := obj
@@ -23,4 +23,4 @@ install: $(EXECUTABLE)
 	@cp completions/aliasme.fish $(HOME)/.config/fish/completions
 
 clean:
-	rm -rf *.o $(EXECUTABLE)
+	rm -rf *.o src/*.o $(EXECUTABLE)
