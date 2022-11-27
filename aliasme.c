@@ -42,16 +42,10 @@ const char* COMPLETION_TEMPLATE =
     "\t-a \"%s\" \\\n"
     "\t-d \"%s\"\n\n";
 
-const char* ALIASME_ROOT_COMPLETION =
-    "complete -f -c aliasme \\\n"
-    "\t-n \"not __fish_seen_subcommand_from add edit rm run\" \\\n"
-    "\t-a \"add edit rm run\" \\\n";
-
-const char* ALIASME_ADD_COMPLETION_TEMPLATE =
-    "complete -f -c aliasme \\\n"
-    "\t-n \"__fish_seen_subcommand_from add\" \\\n"
-    "\t-a \"(/bin/ls $HOME/.local/share/aliasme)\" \\\n"
-    "\t-d \"add new command\"\n\n";
+const char* COMPLETION_HELP_TEMPLATE =
+    "complete -f -c %s \\\n"
+    "\t-s h \\\n"
+    "\t-l help\n\n";
 
 const char* ADD = "add";
 const char* EDIT = "edit";
@@ -132,14 +126,28 @@ void create_executable(char* cmd) {
     chmod(exec_path, 0755);
 }
 
-void generate_completions_for_command(FILE* file, char* cmd, char* command_path,
+void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
+                                      char* command_path,
                                       char** root_cmd_list) {
-    struct dirent* entry = 0;
-    DIR* dp = 0;
+    struct dirent* entry = NULL;
 
-    char* subcommand_list[MAX_COMPLETION_DEPTH] = {0};
-    int len_subcommand_list = 0;
+    if (!*root_cmd_list) {
+        DIR* dp = NULL;
+        fprintf(file, "set -l _subcommands \"");
 
+        if ((dp = opendir(command_path)))
+            while ((entry = readdir(dp))) {
+                if (entry->d_type != DT_DIR) continue;
+                char* next_cmd = entry->d_name;
+                if (!strcmp(next_cmd, ".") || !strcmp(next_cmd, "..")) continue;
+                fprintf(file, "%s ", next_cmd);
+            }
+
+        fprintf(file, "\"\n\n");
+        closedir(dp);
+    }
+
+    DIR* dp = NULL;
     if ((dp = opendir(command_path)))
         while ((entry = readdir(dp))) {
             if (entry->d_type != DT_DIR) continue;
@@ -157,12 +165,7 @@ void generate_completions_for_command(FILE* file, char* cmd, char* command_path,
                 calloc(sizeof(char), strlen(next_cmd) + 1);
             strcpy(root_cmd_list[len_cmd_list], next_cmd);
 
-            subcommand_list[len_subcommand_list] =
-                calloc(sizeof(char), strlen(next_cmd) + 1);
-            strcpy(subcommand_list[len_subcommand_list], next_cmd);
-            ++len_subcommand_list;
-
-            generate_completions_for_command(file, next_cmd, command_path,
+            generate_completions_for_command(file, cmd, next_cmd, command_path,
                                              root_cmd_list);
 
             // clean the state for the next iteration
@@ -173,24 +176,24 @@ void generate_completions_for_command(FILE* file, char* cmd, char* command_path,
         }
 
     char condition[MAX_CONDITION_BUFFER] = {0};
-    char args[MAX_ARGS_BUFFER] = {0};
-
-    for (int i = 0; i < MAX_COMPLETION_DEPTH; i++) {
-        if (root_cmd_list[i] == 0) break;
-        char* concat = i ? "; and " : "";
+    if (*root_cmd_list && *(root_cmd_list + 1)) {
+        for (int i = 0; i < MAX_COMPLETION_DEPTH; i++) {
+            if (i + 1 < MAX_COMPLETION_DEPTH && !root_cmd_list[i + 1]) break;
+            char* concat = i ? "; and " : "";
+            snprintf(condition + strlen(condition),
+                     MAX_CONDITION_BUFFER - strlen(condition),
+                     "%s__fish_seen_subcommand_from %s", concat,
+                     root_cmd_list[i]);
+        }
+    } else
         snprintf(condition + strlen(condition),
                  MAX_CONDITION_BUFFER - strlen(condition),
-                 "%s__fish_seen_subcommand_from %s", concat, root_cmd_list[i]);
-    }
+                 "not __fish_seen_subcommand_from $_subcommands");
 
-    for (int i = 0; i < len_subcommand_list; i++) {
-        char* concat = i ? " " : "";
-        snprintf(args + strlen(args), MAX_ARGS_BUFFER - strlen(args), "%s%s",
-                 concat, subcommand_list[i]);
-        free(subcommand_list[i]);
-    }
-
-    fprintf(file, COMPLETION_TEMPLATE, cmd, condition, args, "");
+    if (!*root_cmd_list)
+        fprintf(file, COMPLETION_HELP_TEMPLATE, cmd);
+    else
+        fprintf(file, COMPLETION_TEMPLATE, cmd, condition, subcommand, "");
 
     closedir(dp);
 }
@@ -208,7 +211,8 @@ void generate_fish_completion(char* cmd) {
              ALIASME_DIRECTORY, cmd);
 
     char* root_cmd_list[MAX_COMPLETION_DEPTH] = {0};
-    generate_completions_for_command(file, cmd, command_path, root_cmd_list);
+    generate_completions_for_command(file, cmd, cmd, command_path,
+                                     root_cmd_list);
 
     fclose(file);
 }
@@ -282,6 +286,27 @@ bool get_args(char* path) {
     return has_args;
 }
 
+void print_help(char* exec_path) {
+    snprintf(exec_path + strlen(exec_path), MAX_PATH_LENGTH - strlen(exec_path),
+             "/%s", MAIN);
+
+    char header_buf[HEADER_SIZE] = {0};
+    FILE* file = fopen(exec_path, "r");
+    if (!file) handle_error("cannot check main content");
+
+    fread(header_buf, sizeof(char), HEADER_SIZE, file);
+
+    char* help_ptr;
+    if ((help_ptr = strstr(header_buf, "# Help:")) != NULL) {
+        help_ptr += 7;
+        while (*help_ptr && *help_ptr == ' ') ++help_ptr;
+        while (*help_ptr != '\n') printf("%c", *help_ptr++);
+        puts("");
+    }
+
+    fclose(file);
+}
+
 void run_command(int argc, char* argv[]) {
     if (argc == 0) usage();
 
@@ -295,6 +320,11 @@ void run_command(int argc, char* argv[]) {
             snprintf(exec_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
                      ALIASME_DIRECTORY, argv[i]);
         if (get_args(exec_path)) break;
+        if (i + 1 < argc &&
+            (!strcmp(argv[i + 1], "-h") || !strcmp(argv[i + 1], "--help"))) {
+            print_help(exec_path);
+            return;
+        }
 
         struct stat st = {0};
         if (stat(exec_path, &st) == -1) handle_error("command does not exist");
