@@ -32,7 +32,7 @@ void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
                 if (entry->d_type != DT_DIR) continue;
                 char* next_cmd = entry->d_name;
                 if (!strcmp(next_cmd, ".") || !strcmp(next_cmd, "..")) continue;
-                fprintf(file, "%s ", next_cmd);
+                fprintf(file, " %s", next_cmd);
             }
 
         fprintf(file, "\"\n\n");
