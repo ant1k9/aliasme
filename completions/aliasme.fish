@@ -28,5 +28,10 @@ complete -f -c aliasme \
     -d "run command"
 
 complete -f -c aliasme \
+    -n "not __fish_seen_subcommand_from add edit rm run" \
+    -a "generate" \
+    -d "generate completions"
+
+complete -f -c aliasme \
     -n "__fish_seen_subcommand_from add edit rm run" \
     -a "(_list_commands)"

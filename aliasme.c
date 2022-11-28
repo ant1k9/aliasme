@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "./src/add.h"
+#include "./src/completion.h"
 #include "./src/const.h"
 #include "./src/edit.h"
 #include "./src/help.h"
@@ -24,6 +25,10 @@ int main(int argc, char* argv[]) {
     }
     if (!strcmp(argv[1], EDIT)) {
         edit_command(argc - 2, argv + 2);
+        return 0;
+    }
+    if (!strcmp(argv[1], GENERATE)) {
+        generate_completions();
         return 0;
     }
 

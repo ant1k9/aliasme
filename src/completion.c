@@ -108,3 +108,21 @@ void generate_fish_completion(char* cmd) {
 
     fclose(file);
 }
+
+void generate_completions() {
+    struct dirent* entry = NULL;
+    DIR* dp = NULL;
+    char aliasme_dir[MAX_PATH_LENGTH] = {0};
+
+    snprintf(aliasme_dir, MAX_PATH_LENGTH, "%s/%s", getenv("HOME"),
+             ALIASME_DIRECTORY);
+    if ((dp = opendir(aliasme_dir)))
+        while ((entry = readdir(dp))) {
+            if (entry->d_type != DT_DIR) continue;
+            char* next_cmd = entry->d_name;
+            if (!strcmp(next_cmd, ".") || !strcmp(next_cmd, "..")) continue;
+            generate_fish_completion(next_cmd);
+        }
+
+    closedir(dp);
+}

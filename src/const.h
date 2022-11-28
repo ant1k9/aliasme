@@ -11,6 +11,7 @@
 #define EDIT "edit"
 #define REMOVE "rm"
 #define RUN "run"
+#define GENERATE "generate"
 
 #ifndef ALIASME_DIRECTORY
 #define ALIASME_DIRECTORY ".local/share/aliasme"
