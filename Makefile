@@ -1,5 +1,6 @@
 CC=gcc
-CFLAGS=-c -Wall -Wextra -Wpedantic -std=c11
+EXTRAFLAGS=
+CFLAGS=-c -Wall -Wextra -Wpedantic -std=c11 $(EXTRAFLAGS)
 LFLAGS=-Wall
 
 SOURCES=$(wildcard *.c) $(wildcard src/*.c)
@@ -9,8 +10,11 @@ OBJDIR := obj
 OBJECTS := $(SOURCES:.c=.o)
 EXECUTABLE=aliasme
 
-all: $(SOURCES) $(EXECUTABLE)
+.PHONY: $(SOURCES)
+.PHONY: all
+all: $(EXECUTABLE)
 
+.PHONY: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LFLAGS) $(OBJECTS) -o $@
 	@grep $(EXECUTABLE) .gitignore || echo $(EXECUTABLE) >> .gitignore

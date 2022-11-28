@@ -12,7 +12,9 @@
 #define REMOVE "rm"
 #define RUN "run"
 
+#ifndef ALIASME_DIRECTORY
 #define ALIASME_DIRECTORY ".local/share/aliasme"
+#endif
 #define ALIASME_BIN "bin"
 #define MAIN "_main"
 #define FISH_COMPLETION_DIRECTORY ".config/fish/completions"
