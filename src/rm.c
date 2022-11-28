@@ -29,7 +29,7 @@ void remove_fish_completion(char* cmd) {
     struct stat st = {0};
     char completion_path[MAX_PATH_LENGTH] = {0};
 
-    snprintf(completion_path, MAX_PATH_LENGTH, "%s/%s/%s", getenv("HOME"),
+    snprintf(completion_path, MAX_PATH_LENGTH, "%s/%s/%s.fish", getenv("HOME"),
              FISH_COMPLETION_DIRECTORY, cmd);
 
     if (stat(completion_path, &st) != -1) remove(completion_path);
