@@ -18,6 +18,28 @@ const char* COMPLETION_HELP_TEMPLATE =
     "\t-s h \\\n"
     "\t-l help\n\n";
 
+void read_description(char* command_path, char* description) {
+    char main_path[MAX_PATH_LENGTH];
+    snprintf(main_path, 1024 - strlen(command_path), "%s/%s", command_path,
+             MAIN);
+
+    FILE* file = fopen(main_path, "r");
+
+    char buf[MAX_DESCRIPTION_LENGTH * 2];
+    fread(buf, sizeof(char), MAX_DESCRIPTION_LENGTH * 2, file);
+
+    char* description_ptr;
+    if ((description_ptr = strstr(buf, "# Description:")) != NULL) {
+        description_ptr += 14;
+        while (*description_ptr && *description_ptr == ' ') ++description_ptr;
+        while (*description_ptr != '\n')
+            sprintf(description + strlen(description), "%c",
+                    *description_ptr++);
+    }
+
+    fclose(file);
+}
+
 void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
                                       char* command_path,
                                       char** root_cmd_list) {
@@ -84,8 +106,13 @@ void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
 
     if (!*root_cmd_list)
         fprintf(file, COMPLETION_HELP_TEMPLATE, cmd);
-    else
-        fprintf(file, COMPLETION_TEMPLATE, cmd, condition, subcommand, "");
+    else {
+        char description[MAX_DESCRIPTION_LENGTH];
+        memset(description, '\0', MAX_DESCRIPTION_LENGTH);
+        read_description(command_path, description);
+        fprintf(file, COMPLETION_TEMPLATE, cmd, condition, subcommand,
+                description);
+    }
 
     closedir(dp);
 }
