@@ -74,7 +74,7 @@ void run_command(int argc, char* argv[]) {
              "/%s", MAIN);
     for (++i; i < argc; i++)
         snprintf(exec_path + strlen(exec_path),
-                 MAX_PATH_LENGTH - strlen(exec_path), " %s", argv[i]);
+                 MAX_PATH_LENGTH - strlen(exec_path), " '%s'", argv[i]);
 
     if (system(exec_path)) handle_error("cannot run command");
 }
