@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "completion.h"
 #include "const.h"
 #include "dir.h"
 #include "help.h"
@@ -34,5 +35,6 @@ void edit_command(int argc, char* argv[]) {
     }
 
     edit_main(cmd_path);
+    generate_fish_completion(argv[0]);
 }
 
