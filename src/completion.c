@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "add.h"
 #include "const.h"
 
 const char* COMPLETION_TEMPLATE =
@@ -149,6 +150,7 @@ void generate_completions() {
             char* next_cmd = entry->d_name;
             if (!strcmp(next_cmd, ".") || !strcmp(next_cmd, "..")) continue;
             generate_fish_completion(next_cmd);
+            create_executable(next_cmd);
         }
 
     closedir(dp);
