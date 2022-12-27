@@ -100,10 +100,13 @@ void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
                      "%s__fish_seen_subcommand_from %s", concat,
                      root_cmd_list[i]);
         }
-    } else
-        snprintf(condition + strlen(condition),
-                 MAX_CONDITION_BUFFER - strlen(condition),
-                 "not __fish_seen_subcommand_from $_subcommands");
+    }
+
+    int n_args = 0;
+    while (*(root_cmd_list + n_args)) ++n_args;
+    snprintf(condition + strlen(condition),
+             MAX_CONDITION_BUFFER - strlen(condition),
+             "; and test (commandline | wc -w) -eq %d", n_args);
 
     if (!*root_cmd_list)
         fprintf(file, COMPLETION_HELP_TEMPLATE, cmd);
