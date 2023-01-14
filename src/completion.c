@@ -106,7 +106,7 @@ void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
     while (*(root_cmd_list + n_args)) ++n_args;
     snprintf(condition + strlen(condition),
              MAX_CONDITION_BUFFER - strlen(condition),
-             "; and test (commandline | wc -w) -eq %d", n_args);
+             "; and test (commandline | wc -w) -le %d", n_args + 1);
 
     if (!*root_cmd_list)
         fprintf(file, COMPLETION_HELP_TEMPLATE, cmd);
