@@ -7,6 +7,7 @@
 #include "./src/help.h"
 #include "./src/rm.h"
 #include "./src/run.h"
+#include "./src/show.h"
 
 int main(int argc, char* argv[]) {
     if (argc == 1) usage();
@@ -25,6 +26,10 @@ int main(int argc, char* argv[]) {
     }
     if (!strcmp(argv[1], EDIT)) {
         edit_command(argc - 2, argv + 2);
+        return 0;
+    }
+    if (!strcmp(argv[1], SHOW)) {
+        show_command(argc - 2, argv + 2);
         return 0;
     }
     if (!strcmp(argv[1], GENERATE)) {

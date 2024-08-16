@@ -44,7 +44,7 @@ void create_main(char* cmd) {
     fclose(file);
 
     char editor_cmd[MAX_PATH_LENGTH] = {0};
-    snprintf(editor_cmd, MAX_PATH_LENGTH - strlen(main_path), "$EDITOR %s",
+    snprintf(editor_cmd, MAX_PATH_LENGTH - strlen(main_path) - 7, "$EDITOR %s",
              main_path);
     if (system(editor_cmd)) handle_error("cannot open file in editor");
 

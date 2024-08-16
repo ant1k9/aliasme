@@ -77,7 +77,7 @@ void generate_completions_for_command(FILE* file, char* cmd, char* subcommand,
             int len_cmd_list = 0;
             while (root_cmd_list[len_cmd_list]) ++len_cmd_list;
             root_cmd_list[len_cmd_list] =
-                calloc(sizeof(char), strlen(next_cmd) + 1);
+                calloc(strlen(next_cmd) + 1, sizeof(char));
             strcpy(root_cmd_list[len_cmd_list], next_cmd);
 
             generate_completions_for_command(file, cmd, next_cmd, command_path,

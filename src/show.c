@@ -2,21 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
-#include "completion.h"
 #include "const.h"
 #include "dir.h"
 #include "help.h"
 
-void edit_main(char* cmd) {
-    char editor_cmd[MAX_PATH_LENGTH] = {0};
+void show_main(char* cmd) {
+    FILE* file;
+    char ch;
 
-    snprintf(editor_cmd, MAX_PATH_LENGTH, "$EDITOR %s/%s", cmd, MAIN);
+    file = fopen(cmd, "r");
+    if (file == NULL) handle_error("Error! File cannot be opened.\n");
 
-    if (system(editor_cmd)) handle_error("cannot open file in editor");
+    while ((ch = fgetc(file)) != EOF) printf("%c", ch);
+
+    fclose(file);
 }
 
-void edit_command(int argc, char* argv[]) {
+void show_command(int argc, char* argv[]) {
     if (argc == 0) usage();
 
     ensure_aliasme_directory_exists();
@@ -34,6 +38,8 @@ void edit_command(int argc, char* argv[]) {
         if (stat(cmd_path, &st) == -1) handle_error("command does not exist");
     }
 
-    edit_main(cmd_path);
-    generate_fish_completion(argv[0]);
+    snprintf(cmd_path + strlen(cmd_path), MAX_PATH_LENGTH - strlen(cmd_path),
+             "/%s", MAIN);
+
+    show_main(cmd_path);
 }

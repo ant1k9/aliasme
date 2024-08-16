@@ -7,31 +7,38 @@ function _list_commands
     end
 end
 
+set -l _SUBCOMMANDS "add edit rm run show"
+
 complete -f -c aliasme \
-    -n "not __fish_seen_subcommand_from add edit rm run" \
+    -n "not __fish_seen_subcommand_from $_SUBCOMMANDS" \
     -a "add" \
     -d "add new command"
 
 complete -f -c aliasme \
-    -n "not __fish_seen_subcommand_from add edit rm run" \
+    -n "not __fish_seen_subcommand_from $_SUBCOMMANDS" \
     -a "edit" \
     -d "edit command"
 
 complete -f -c aliasme \
-    -n "not __fish_seen_subcommand_from add edit rm run" \
+    -n "not __fish_seen_subcommand_from $_SUBCOMMANDS" \
     -a "rm" \
     -d "rm command"
 
 complete -f -c aliasme \
-    -n "not __fish_seen_subcommand_from add edit rm run" \
+    -n "not __fish_seen_subcommand_from $_SUBCOMMANDS" \
     -a "run" \
     -d "run command"
 
 complete -f -c aliasme \
-    -n "not __fish_seen_subcommand_from add edit rm run" \
+    -n "not __fish_seen_subcommand_from $_SUBCOMMANDS" \
     -a "generate" \
     -d "generate completions"
 
 complete -f -c aliasme \
-    -n "__fish_seen_subcommand_from add edit rm run" \
+    -n "not __fish_seen_subcommand_from $_SUBCOMMANDS" \
+    -a "show" \
+    -d "show command content"
+
+complete -f -c aliasme \
+    -n "__fish_seen_subcommand_from $_SUBCOMMANDS" \
     -a "(_list_commands)"

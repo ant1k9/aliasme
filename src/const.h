@@ -12,6 +12,7 @@
 #define EDIT "edit"
 #define REMOVE "rm"
 #define RUN "run"
+#define SHOW "show"
 #define GENERATE "generate"
 
 #ifndef ALIASME_DIRECTORY
