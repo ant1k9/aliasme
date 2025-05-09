@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,20 +31,26 @@ void create_command_directory(char* cmd) {
     if (stat(cmd_path, &st) == -1) mkdir(cmd_path, 0755);
 }
 
-void create_main(char* cmd) {
-    char main_path[MAX_PATH_LENGTH] = {0};
+void create_main(char* cmd, bool is_target) {
+    char main_path[MAX_PATH_LENGTH - 16] = {0};
+    char editor_cmd[MAX_PATH_LENGTH] = {0};
 
-    snprintf(main_path, MAX_PATH_LENGTH, "%s/%s/%s/%s", getenv("HOME"),
+    snprintf(main_path, MAX_PATH_LENGTH - 16, "%s/%s/%s/%s", getenv("HOME"),
              ALIASME_DIRECTORY, cmd, MAIN);
 
     struct stat st = {0};
-    if (stat(main_path, &st) != -1) return;
+    if (stat(main_path, &st) != -1) {
+        if (!is_target) return;
+
+        snprintf(editor_cmd, MAX_PATH_LENGTH, "$EDITOR %s", main_path);
+        if (system(editor_cmd)) handle_error("cannot open file in editor");
+        return;
+    }
 
     FILE* file = fopen(main_path, "w");
     fprintf(file, MAIN_TEMPLATE, cmd);
     fclose(file);
 
-    char editor_cmd[MAX_PATH_LENGTH] = {0};
     snprintf(editor_cmd, MAX_PATH_LENGTH - strlen(main_path) - 7, "$EDITOR %s",
              main_path);
     if (system(editor_cmd)) handle_error("cannot open file in editor");
@@ -79,7 +86,7 @@ void add_command(int argc, char* argv[]) {
                  argv[i]);
 
         create_command_directory(cmd_path);
-        create_main(cmd_path);
+        create_main(cmd_path, i == argc - 1);
     }
 
     create_executable(argv[0]);
